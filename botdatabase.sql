@@ -1,0 +1,34 @@
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+SET time_zone = "+00:00";
+
+DROP TABLE IF EXISTS `kickbans`;
+CREATE TABLE IF NOT EXISTS `kickbans` (
+  `kickbanID` int(11) NOT NULL AUTO_INCREMENT,
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `victimID` varchar(50) NOT NULL,
+  `executorID` varchar(50) NOT NULL,
+  `kickbanType` int(2) NOT NULL,
+  PRIMARY KEY (`kickbanID`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=22 ;
+
+DROP TABLE IF EXISTS `links`;
+CREATE TABLE IF NOT EXISTS `links` (
+  `linkID` int(11) NOT NULL AUTO_INCREMENT,
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `steamID` varchar(50) NOT NULL,
+  `linkURL` text NOT NULL,
+  PRIMARY KEY (`linkID`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=8 ;
+
+DROP TABLE IF EXISTS `logs`;
+CREATE TABLE IF NOT EXISTS `logs` (
+  `logID` int(11) NOT NULL AUTO_INCREMENT,
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `steamID` varchar(50) NOT NULL,
+  `instanceSteamName` varchar(200) NOT NULL,
+  `chatMessage` text NOT NULL,
+  `wordCount` varchar(4) NOT NULL,
+  `linkCount` varchar(4) NOT NULL,
+  `type` varchar(10) NOT NULL,
+  PRIMARY KEY (`logID`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=211 ;
