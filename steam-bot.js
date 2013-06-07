@@ -1,8 +1,8 @@
-var Steam	=	require('steam');
-var mysql	=	require('mysql');
-var fs		=	require('fs');
-var cfg		=	require('./cfg/config');
-
+var Steam		=	require('steam');
+var mysql		=	require('mysql');
+var fs			=	require('fs');
+var cfg			=	require('./cfg/config');
+var commandFile;
 var bot		=	new Steam.SteamClient();
 var stdin	=	process.openStdin();
 
@@ -16,8 +16,11 @@ console.log("|                     A mid-year project by Scott Schultz          
 console.log("|                                                                             |");
 console.log("+-----------------------------------------------------------------------------+");
 
-var messagesLogged = 0, linksLogged = 0, braesKicked = 0, validCommandRequests = 0, invalidCommandRequests = 0;
-var botBirth;
+function requireUncached(module){
+    delete require.cache[require.resolve(module)]
+    return require(module)
+}
+
 var steamChatRoomID = '103582791429601458';
 // If the bot is given -passive as its startup argument, it will not log data, but it will still output it to the cmd window
 
@@ -46,133 +49,81 @@ if(process.argv[2]!="-passive"){
 	passiveMode = true;
 }
 bot.logOn(cfg.steam.username,cfg.steam.password);
+botBirth = new Date();
 bot.on('loggedOn', function() {
-	botBirth = new Date();
-	botBirth = botBirth.getTime()/1000;
+
+	bot.botStats = {
+		botBirth : botBirth.getTime()/1000,
+		messagesLogged : 0,
+		linksLogged : 0,
+		braesKicked : 0,
+		validCommandRequests : 0,
+		invalidCommandRequests : 0,
+		emptyQuotes : 0,
+		selfEmptyQuotes : 0
+	}
 	console.log(green+'[June]'+reset+' Bot Logged in');
 	if(passiveMode){
 		console.log(green+'[June]'+reset+' Not logging chat');
 	} else {
 		console.log(green+'[June]'+reset+' Logging chat');
+		bot.joinChat(steamChatRoomID);
 	}
 	bot.setPersonaState(Steam.EPersonaState.Online); // to display your bot's status as "Online"
-	bot.joinChat(steamChatRoomID);
 
 	stdin.addListener("data", function(d) {
 		botMessage = d.toString();
 		bot.sendMessage(steamChatRoomID,botMessage);
-		geturl = new RegExp("(^|[ \t\r\n])((ftp|http|https|gopher|mailto|news|nntp|telnet|wais|file|prospero|aim|webcal):(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))","g");
-		linkCount = 0;
-		urlList = botMessage.match(geturl);
-		if(urlList){
-			linkCount = urlList.length;
-			console.log(green+"[RESPONSE]"+reset+" That message had one or more links.");
-			console.log(cyan+"[Matches] "+reset+" "+linkCount);
-			for (var i = 0; i < linkCount; i++) {
-				insertURL = urlList[i];
-				connection.query("INSERT INTO `links` (`timestamp`,`steamID`,`linkURL`) VALUES (NOW(),"+chatter+","+connection.escape(insertURL)+")", function(err, rows, fields) {
-					if(!err) {
-						console.log(green+"[LOGGED]"+reset+" Found and logged a link from: "+chatter);
-					} else {
-						throw err
-					}
-				});
-			}
-		}
-		wordCount = botMessage.match(/\S+/gi).length;
-		wordCount = wordCount-linkCount;
-		connection.query("INSERT INTO `logs` (`timestamp`,`steamID`,`instanceSteamName`,`chatMessage`,`wordCount`,`linkCount`,`type`) VALUES (NOW(),"+bot.steamID+","+connection.escape(bot.users[bot.steamID].playerName)+","+connection.escape(botMessage)+","+wordCount+","+linkCount+",'grpmsg')", function(err, rows, fields) {
-			if(!err) {
-				console.log(green+"[LOGGED]"+reset+" "+bot.users[bot.steamID].playerName+' ('+bot.steamID+'): '+botMessage);
-			} else {
-				throw err
-			}
-		});
+		listener = requireUncached('./lib/chatListener');
+		listener.listenToChat(botMessage,bot.steamID,'grpmsg',bot,connection,steamChatRoomID);
+
+		// geturl = new RegExp("(^|[ \t\r\n])((ftp|http|https|gopher|mailto|news|nntp|telnet|wais|file|prospero|aim|webcal):(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))","g");
+		// linkCount = 0;
+		// urlList = botMessage.match(geturl);
+		// if(urlList){
+		// 	linkCount = urlList.length;
+		// 	console.log(green+"[RESPONSE]"+reset+" That message had one or more links.");
+		// 	console.log(cyan+"[Matches] "+reset+" "+linkCount);
+		// 	for (var i = 0; i < linkCount; i++) {
+		// 		insertURL = urlList[i];
+		// 		connection.query("INSERT INTO `links` (`timestamp`,`steamID`,`linkURL`) VALUES (NOW(),"+chatter+","+connection.escape(insertURL)+")", function(err, rows, fields) {
+		// 			if(!err) {
+		// 				console.log(green+"[LOGGED]"+reset+" Found and logged a link from: "+chatter);
+		// 			} else {
+		// 				throw err
+		// 			}
+		// 		});
+		// 	}
+		// }
+		// wordCount = botMessage.match(/\S+/gi).length;
+		// wordCount = wordCount-linkCount;
+		// connection.query("INSERT INTO `logs` (`timestamp`,`steamID`,`chatMessage`,`wordCount`,`linkCount`,`emptyQuoteCount`,`type`) VALUES (NOW(),"+bot.steamID+","+connection.escape(bot.users[bot.steamID].playerName)+","+connection.escape(botMessage)+","+wordCount+","+linkCount+",'grpmsg')", function(err, rows, fields) {
+		// 	if(!err) {
+		// 		console.log(green+"[LOGGED]"+reset+" "+bot.users[bot.steamID].playerName+' ('+bot.steamID+'): '+botMessage);
+		// 	} else {
+		// 		throw err
+		// 	}
+		// });
 	});
 
 });
 bot.on('friendMsg', function(source, message, type) { // friend messages
+	commandFile = requireUncached('./lib/chatCommands');
 	if(!passiveMode) {
 		if(message){
-			connection.query("INSERT INTO `logs` (`steamID`,`timestamp`,`instanceSteamName`,`chatMessage`,`type`) VALUES ("+source+",NOW(),"+connection.escape(bot.users[source].playerName)+","+connection.escape(message)+",'frndmsg')", function(err, rows, fields) {
-				if(!err) {
-					console.log(green+"[LOGGED]"+reset+" "+bot.users[source].playerName+' ('+source+'): '+message);
-				} else {
-					throw err
-				}
-			});
-			console.log(yellow+"[OBSERVED] "+reset+" "+bot.users[source].playerName+' ('+source+'): '+message);
-			timeNow = new Date();
-			botUptime = (timeNow.getTime()/1000)-botBirth;
-			botLife = Math.round(botUptime/60);
-			if(message=="!commands") {
-				validCommandRequests++;
-				bot.sendMessage(source,"Hi "+bot.users[source].playerName+" you can use the following commands in and around my mouth: !uptime, !chatstats.");
-			} else if(message=="!uptime") {
-				validCommandRequests++;
-				bot.sendMessage(source,"I've been alive for "+botLife+" minutes so far.");
-			} else if(message=="!chatstats") {
-				validCommandRequests++;
-				bot.sendMessage(source,"I've got stats for chats, I've:\n...logged "+messagesLogged+" lines of chat\n...saved "+linksLogged+" links\n...had "+(validCommandRequests+invalidCommandRequests)+" total requests, "+validCommandRequests+" that were actually valid\n...and Brae has been kicked "+braesKicked+" times in the "+botLife+" minutes I've been alive for.");
-			} else {
-				invalidCommandRequests++;
-				bot.sendMessage(source,message+" wasn't a valid command.\nYou can use the following commands in and around my mouth: !uptime, !chatstats.");
-			}
+			commandFile.getActiveCommand(message,source,bot,connection);
 		}
 	} else {
-		console.log(yellow+"[OBSERVED] "+reset+" "+bot.users[source].playerName+' ('+source+'): '+message);
 		if(message){
-			timeNow = new Date();
-			botUptime = (timeNow.getTime()/1000)-botBirth;
-			botLife = Math.round(botUptime/60);
-			if(message=="!commands") {
-				validCommandRequests++;
-				bot.sendMessage(source,"Hi "+bot.users[source].playerName+" you can use the following commands in and around my mouth: !uptime, !chatstats.");
-			} else if(message=="!uptime") {
-				validCommandRequests++;
-				bot.sendMessage(source,"I've been alive for "+botLife+" minutes so far.");
-			} else if(message=="!chatstats") {
-				validCommandRequests++;
-				bot.sendMessage(source,"I've got stats for chats, I've:\n...logged "+messagesLogged+" lines of chat\n...saved "+linksLogged+" links\n...had "+(validCommandRequests+invalidCommandRequests)+" total requests, "+validCommandRequests+" that were actually valid\n...and Brae has been kicked "+braesKicked+" times in the "+botLife+" minutes I've been alive for.");
-			} else {
-				invalidCommandRequests++;
-				bot.sendMessage(source,message+" wasn't a valid command.\nYou can use the following commands in and around my mouth: !uptime, !chatstats.");
-			}
+			commandFile.getPassiveCommand(message,source,bot,connection);
 		}
 	}
 });
 bot.on('chatMsg', function(chatRoom, message, type, chatter) { // chat room messages
+	listener = requireUncached('./lib/chatListener');
 	if(!passiveMode) {
 		if(message){
-			geturl = new RegExp("(^|[ \t\r\n])((ftp|http|https|gopher|mailto|news|nntp|telnet|wais|file|prospero|aim|webcal):(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))","g");
-			linkCount = 0;
-			urlList = message.match(geturl);
-			if(urlList){
-				linkCount = urlList.length;
-				console.log(green+"[RESPONSE]"+reset+" That message had one or more links.");
-				console.log(cyan+"[Matches] "+reset+" "+linkCount);
-				for (var i = 0; i < linkCount; i++) {
-					insertURL = urlList[i];
-					connection.query("INSERT INTO `links` (`timestamp`,`steamID`,`linkURL`) VALUES (NOW(),"+chatter+","+connection.escape(insertURL)+")", function(err, rows, fields) {
-						if(!err) {
-							linksLogged++;
-							console.log(green+"[LOGGED]"+reset+" Found and logged a link from: "+chatter);
-						} else {
-							throw err
-						}
-					});
-				}
-			}
-			wordCount = message.match(/\S+/gi).length;
-			wordCount = wordCount-linkCount;
-			connection.query("INSERT INTO `logs` (`timestamp`,`steamID`,`instanceSteamName`,`chatMessage`,`wordCount`,`linkCount`,`type`) VALUES (NOW(),"+chatter+","+connection.escape(bot.users[chatter].playerName)+","+connection.escape(message)+","+wordCount+","+linkCount+",'grpmsg')", function(err, rows, fields) {
-				if(!err) {
-					messagesLogged++;
-					console.log(green+"[LOGGED]"+reset+" "+bot.users[chatter].playerName+' ('+chatter+'): '+message);
-				} else {
-					throw err
-				}
-			});
+			listener.listenToChat(message,chatter,type,bot,connection,chatRoom);
 		}
 	} else {
 		console.log(yellow+"[OBSERVED] "+reset+" "+bot.users[chatter].playerName+' ('+chatter+'): '+message);
@@ -193,8 +144,9 @@ bot.on('chatStateChange',function(state,victim,sourceRoom,executor){
 	if(victim==bot.steamID) {
 		console.log("[What a bitch] "+executor+" just kicked me!");
 		if(state=='8'){
-			bot.joinChat(steamChatRoomID);
-			bot.sendMessage(steamChatRoomID,"That was mean :(");
+			randomJoin = Math.floor(Math.random()*500);
+			setTimeout(bot.joinChat(steamChatRoomID),randomJoin);
+			setTimeout(bot.sendMessage(steamChatRoomID,"That was mean :("),randomJoin);
 		}
 	} else if(victim=='76561197994626023') {
 		if(state=='8'){
