@@ -9,38 +9,51 @@ var stdin	=	process.openStdin();
 console.log("");
 console.log("+-----------------------------------------------------------------------------+");
 console.log("|                                                                             |");
-console.log("|                            ~ Strong June v0.3 ~                             |");
-console.log("|                            ~     6/6/2013     ~                             |");
+console.log("|                            ~ Strong June v0.4 ~                             |");
+console.log("|                            ~     7/6/2013     ~                             |");
 console.log("|                                                                             |");
 console.log("|                     A mid-year project by Scott Schultz                     |");
 console.log("|                                                                             |");
 console.log("+-----------------------------------------------------------------------------+");
 
+var messagesLogged = 0, linksLogged = 0, braesKicked = 0, validCommandRequests = 0, invalidCommandRequests = 0;
+var botBirth;
+var steamChatRoomID = '103582791429601458';
 // If the bot is given -passive as its startup argument, it will not log data, but it will still output it to the cmd window
+
+var reset = "\033[0m";
+var red = "\033[31m";
+var green = "\033[32m";
+var yellow = "\033[33m";
+var blue = "\033[34m";
+var magenta = "\033[35m";
+var cyan = "\033[36m";
+var white = "\033[37m";
 
 if(process.argv[2]!="-passive"){
 	var connection = mysql.createConnection(cfg.database);
 
 	connection.connect(function(err) {
 		if(err) {
-			console.log("[June] Connection failed! "+err);
+			console.log(red+"[June]"+reset+" Connection failed! "+err);
 			process.exit();
 		} else {
-			console.log("[June] Connected and ready to go.");
+			console.log(green+"[June]"+reset+" Connected and ready to go.");
 		}
 	});
 	passiveMode = false;
 } else {
 	passiveMode = true;
 }
-var steamChatRoomID = '103582791429601458';
 bot.logOn(cfg.steam.username,cfg.steam.password);
 bot.on('loggedOn', function() {
-	console.log('[June] Bot Logged in');
+	botBirth = new Date();
+	botBirth = botBirth.getTime()/1000;
+	console.log(green+'[June]'+reset+' Bot Logged in');
 	if(passiveMode){
-		console.log('[June] Not logging chat');
+		console.log(green+'[June]'+reset+' Not logging chat');
 	} else {
-		console.log('[June] Logging chat');
+		console.log(green+'[June]'+reset+' Logging chat');
 	}
 	bot.setPersonaState(Steam.EPersonaState.Online); // to display your bot's status as "Online"
 	bot.joinChat(steamChatRoomID);
@@ -53,13 +66,13 @@ bot.on('loggedOn', function() {
 		urlList = botMessage.match(geturl);
 		if(urlList){
 			linkCount = urlList.length;
-			console.log("[RESPONSE] That message had one or more links.");
-			console.log("[Matches] "+linkCount);
+			console.log(green+"[RESPONSE]"+reset+" That message had one or more links.");
+			console.log(cyan+"[Matches] "+reset+" "+linkCount);
 			for (var i = 0; i < linkCount; i++) {
 				insertURL = urlList[i];
 				connection.query("INSERT INTO `links` (`timestamp`,`steamID`,`linkURL`) VALUES (NOW(),"+chatter+","+connection.escape(insertURL)+")", function(err, rows, fields) {
 					if(!err) {
-						console.log("[LOGGED] Found and logged a link from: "+chatter);
+						console.log(green+"[LOGGED]"+reset+" Found and logged a link from: "+chatter);
 					} else {
 						throw err
 					}
@@ -70,7 +83,7 @@ bot.on('loggedOn', function() {
 		wordCount = wordCount-linkCount;
 		connection.query("INSERT INTO `logs` (`timestamp`,`steamID`,`instanceSteamName`,`chatMessage`,`wordCount`,`linkCount`,`type`) VALUES (NOW(),"+bot.steamID+","+connection.escape(bot.users[bot.steamID].playerName)+","+connection.escape(botMessage)+","+wordCount+","+linkCount+",'grpmsg')", function(err, rows, fields) {
 			if(!err) {
-				console.log("[LOGGED] "+bot.users[bot.steamID].playerName+' ('+bot.steamID+'): '+botMessage);
+				console.log(green+"[LOGGED]"+reset+" "+bot.users[bot.steamID].playerName+' ('+bot.steamID+'): '+botMessage);
 			} else {
 				throw err
 			}
@@ -78,22 +91,56 @@ bot.on('loggedOn', function() {
 	});
 
 });
-// bot.on('friendMsg', function(source, message, type) { // friend messages
-// 	if(!passiveMode) {
-// 		if(message){
-// 			connection.query("INSERT INTO `logs` (`steamID`,`timestamp`,`instanceSteamName`,`chatMessage`,`type`) VALUES ("+source+",NOW(),"+connection.escape(bot.users[source].playerName)+","+connection.escape(message)+",'frndmsg')", function(err, rows, fields) {
-// 				if(!err) {
-// 					console.log("[LOGGED] "+bot.users[source].playerName+' ('+source+'): '+message);
-// 				} else {
-// 					throw err
-// 				}
-// 			});
-// 		}
-// 	} else {
-// 		console.log("[OBSERVED] "+bot.users[source].playerName+' ('+source+'): '+message);
-// 	}
-
-// });
+bot.on('friendMsg', function(source, message, type) { // friend messages
+	if(!passiveMode) {
+		if(message){
+			connection.query("INSERT INTO `logs` (`steamID`,`timestamp`,`instanceSteamName`,`chatMessage`,`type`) VALUES ("+source+",NOW(),"+connection.escape(bot.users[source].playerName)+","+connection.escape(message)+",'frndmsg')", function(err, rows, fields) {
+				if(!err) {
+					console.log(green+"[LOGGED]"+reset+" "+bot.users[source].playerName+' ('+source+'): '+message);
+				} else {
+					throw err
+				}
+			});
+			console.log(yellow+"[OBSERVED] "+reset+" "+bot.users[source].playerName+' ('+source+'): '+message);
+			timeNow = new Date();
+			botUptime = (timeNow.getTime()/1000)-botBirth;
+			botLife = Math.round(botUptime/60);
+			if(message=="!commands") {
+				validCommandRequests++;
+				bot.sendMessage(source,"Hi "+bot.users[source].playerName+" you can use the following commands in and around my mouth: !uptime, !chatstats.");
+			} else if(message=="!uptime") {
+				validCommandRequests++;
+				bot.sendMessage(source,"I've been alive for "+botLife+" minutes so far.");
+			} else if(message=="!chatstats") {
+				validCommandRequests++;
+				bot.sendMessage(source,"I've got stats for chats, I've:\n...logged "+messagesLogged+" lines of chat\n...saved "+linksLogged+" links\n...had "+(validCommandRequests+invalidCommandRequests)+" total requests, "+validCommandRequests+" that were actually valid\n...and Brae has been kicked "+braesKicked+" times in the "+botLife+" minutes I've been alive for.");
+			} else {
+				invalidCommandRequests++;
+				bot.sendMessage(source,message+" wasn't a valid command.\nYou can use the following commands in and around my mouth: !uptime, !chatstats.");
+			}
+		}
+	} else {
+		console.log(yellow+"[OBSERVED] "+reset+" "+bot.users[source].playerName+' ('+source+'): '+message);
+		if(message){
+			timeNow = new Date();
+			botUptime = (timeNow.getTime()/1000)-botBirth;
+			botLife = Math.round(botUptime/60);
+			if(message=="!commands") {
+				validCommandRequests++;
+				bot.sendMessage(source,"Hi "+bot.users[source].playerName+" you can use the following commands in and around my mouth: !uptime, !chatstats.");
+			} else if(message=="!uptime") {
+				validCommandRequests++;
+				bot.sendMessage(source,"I've been alive for "+botLife+" minutes so far.");
+			} else if(message=="!chatstats") {
+				validCommandRequests++;
+				bot.sendMessage(source,"I've got stats for chats, I've:\n...logged "+messagesLogged+" lines of chat\n...saved "+linksLogged+" links\n...had "+(validCommandRequests+invalidCommandRequests)+" total requests, "+validCommandRequests+" that were actually valid\n...and Brae has been kicked "+braesKicked+" times in the "+botLife+" minutes I've been alive for.");
+			} else {
+				invalidCommandRequests++;
+				bot.sendMessage(source,message+" wasn't a valid command.\nYou can use the following commands in and around my mouth: !uptime, !chatstats.");
+			}
+		}
+	}
+});
 bot.on('chatMsg', function(chatRoom, message, type, chatter) { // chat room messages
 	if(!passiveMode) {
 		if(message){
@@ -102,13 +149,14 @@ bot.on('chatMsg', function(chatRoom, message, type, chatter) { // chat room mess
 			urlList = message.match(geturl);
 			if(urlList){
 				linkCount = urlList.length;
-				console.log("[RESPONSE] That message had one or more links.");
-				console.log("[Matches] "+linkCount);
+				console.log(green+"[RESPONSE]"+reset+" That message had one or more links.");
+				console.log(cyan+"[Matches] "+reset+" "+linkCount);
 				for (var i = 0; i < linkCount; i++) {
 					insertURL = urlList[i];
 					connection.query("INSERT INTO `links` (`timestamp`,`steamID`,`linkURL`) VALUES (NOW(),"+chatter+","+connection.escape(insertURL)+")", function(err, rows, fields) {
 						if(!err) {
-							console.log("[LOGGED] Found and logged a link from: "+chatter);
+							linksLogged++;
+							console.log(green+"[LOGGED]"+reset+" Found and logged a link from: "+chatter);
 						} else {
 							throw err
 						}
@@ -119,33 +167,39 @@ bot.on('chatMsg', function(chatRoom, message, type, chatter) { // chat room mess
 			wordCount = wordCount-linkCount;
 			connection.query("INSERT INTO `logs` (`timestamp`,`steamID`,`instanceSteamName`,`chatMessage`,`wordCount`,`linkCount`,`type`) VALUES (NOW(),"+chatter+","+connection.escape(bot.users[chatter].playerName)+","+connection.escape(message)+","+wordCount+","+linkCount+",'grpmsg')", function(err, rows, fields) {
 				if(!err) {
-					console.log("[LOGGED] "+bot.users[chatter].playerName+' ('+chatter+'): '+message);
+					messagesLogged++;
+					console.log(green+"[LOGGED]"+reset+" "+bot.users[chatter].playerName+' ('+chatter+'): '+message);
 				} else {
 					throw err
 				}
 			});
 		}
 	} else {
-		console.log("[OBSERVED] "+bot.users[chatter].playerName+' ('+chatter+'): '+message);
+		console.log(yellow+"[OBSERVED] "+reset+" "+bot.users[chatter].playerName+' ('+chatter+'): '+message);
 	}
 });
 bot.on('chatStateChange',function(state,victim,sourceRoom,executor){
 	if(!passiveMode) {
 		connection.query("INSERT INTO `kickbans` (`timestamp`,`victimID`,`executorID`,`kickbanType`) VALUES (NOW(),"+victim+",'"+executor+"','"+state+"')", function(err, rows, fields) {
 			if(!err) {
-				console.log("[LOGGED] "+victim+" ("+bot.users[victim].playerName+") chat state altered by "+executor+" ("+bot.users[executor].playerName+") method > "+state);
+				console.log(green+"[LOGGED]"+reset+" "+victim+" ("+bot.users[victim].playerName+") chat state altered by "+executor+" ("+bot.users[executor].playerName+") method > "+state);
 			} else {
 				throw err
 			}
 		});
 	} else {
-		console.log("[OBSERVED] "+victim+" ("+bot.users[victim].playerName+") chat state altered by "+executor+" ("+bot.users[executor].playerName+") method > "+state);
+		console.log(yellow+"[OBSERVED] "+reset+" "+victim+" ("+bot.users[victim].playerName+") chat state altered by "+executor+" ("+bot.users[executor].playerName+") method > "+state);
 	}
 	if(victim==bot.steamID) {
 		console.log("[What a bitch] "+executor+" just kicked me!");
 		if(state=='8'){
 			bot.joinChat(steamChatRoomID);
 			bot.sendMessage(steamChatRoomID,"That was mean :(");
+		}
+	} else if(victim=='76561197994626023') {
+		if(state=='8'){
+			console.log(magenta+"[lol] bye brae."+reset);
+			braesKicked++;
 		}
 	}
 	//  1 : joined
