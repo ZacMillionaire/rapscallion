@@ -74,3 +74,6 @@ bot.on('chatInvite', function(chatRoomID, chatRoomName, patronID) {
 process.on('error',function(){
 	console.log(june.colour.red+"[ERROR]"+june.colour.reset+" shit fucked up somewhere.");
 })
+june.connection.on('error',function(err){
+	databaseHandle = june.loadModule('../lib/database').errorHandle(err,june);
+})
