@@ -40,7 +40,9 @@ bot.on('loggedOn', function() {
 		invalidCommandRequests : 0,
 		emptyQuotes : 0,
 		selfEmptyQuotes : 0,
-		gamesPlayed: 0
+		gamesPlayed: 0,
+		winners 	: 0,
+		losers 		: 0
 	}
 	console.log(june.colour.green+'[June]'+june.colour.reset+' Bot Logged in');
 	if(passiveMode){
