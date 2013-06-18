@@ -21,6 +21,34 @@ Non-node.js dependancies are:
 You'll also need to create an empty database, then import the sql into that database, then within the cfg/config.js file, set the database and steam account details accordingly and all should be set.
 I've not tested this part so let me know if anything goes wrong.
 
-That's about it. The code is terrible for now and sparsly commented. Though its fairly self explanitory if you have used node.js before or have a decent understanding.
+##Chat Commands
 
-I'll make it more friendly once the features are leveled.
+!chatstats
+
+Displays rough stats logged.
+
+!mystats
+
+Sends a stat link to the requesting user
+
+!roulette
+
+Spins the wheel and kicks the winning user
+
+!superroulette
+
+Spins the wheel and bans the winning user.
+
+The above roulette commands require the bot to have a higher rank than those you wish to have affected.
+Steam uses a simple permission system currently, and the highest rank wins out.
+
+Group owner -> Officer -> Moderator -> User
+
+For the best result, the bot should have Officer status and everyone else at Moderator below. Or give the bot just Moderator priviledges if you only want it to affect regular users.
+Nothing with happen if the bot cannot kick or ban a 'winner' aside from sending a message to them and the group chat window.
+
+##Closing
+
+That's about it. The code is terrible for now and sparsly commented. Though its fairly self explanitory if you have used node.js before or have a decent understanding in javascript.
+
+I'll make it more reader friendly once the features are leveled.
