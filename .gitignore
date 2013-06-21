@@ -3,3 +3,7 @@ cfg/config.js
 desktop.ini
 .gitignore
 nodehere.bat
+lib/betMe.js
+lib/tradeMe.js
+trade.js
+data/sentry

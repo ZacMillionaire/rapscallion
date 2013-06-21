@@ -11,52 +11,85 @@ console.log("|                     A mid-year project by Scott Schultz          
 console.log("|                                                                             |");
 console.log("+-----------------------------------------------------------------------------+");
 
-// If the bot is given -passive as its startup argument, it will not log data, but it will still output it to the cmd window
-if(process.argv[2]!="-passive"){
-	june.connection = june.mysql.createConnection(june.cfg.dbInfo);
+june.connection = june.mysql.createConnection(june.cfg.dbInfo);
 
-	june.connection.connect(function(err) {
-		if(err) {
-			console.log(june.colour.red+"[June]"+june.colour.reset+" Connection failed! "+err);
-			process.exit();
-		} else {
-			console.log(june.colour.green+"[June]"+june.colour.reset+" Connected and ready to go.");
-		}
-	});
-	passiveMode = false;
+june.connection.connect(function(err) {
+	if(err) {
+		console.log(june.colour.red+"[June]"+june.colour.reset+" Connection failed! "+err);
+		process.exit();
+	} else {
+		console.log(june.colour.green+"[June]"+june.colour.reset+" Connected and ready to go.");
+	}
+});
+
+if(june.fs.existsSync('data/sentry')) {
+	var steamGuard = june.fs.readFileSync("data/sentry");
 } else {
-	passiveMode = true;
+	var steamGuard = '';
+	// If you have attempted to login once and got an error 63/65, you should have received an email containing a steam guard code. Put it here.
+	// If the code is correct, the bot will capture the sentry hash preventing further need for steam guard codes.
 }
 
-bot.logOn(june.cfg.steamAccount.username,june.cfg.steamAccount.password);
-botBirth = new Date();
-bot.on('loggedOn', function() {
-	bot.botStats = {
-		botBirth : botBirth.getTime()/1000,
-		messagesLogged : 0,
-		linksLogged : 0,
-		braesKicked : 0,
-		validCommandRequests : 0,
-		invalidCommandRequests : 0,
-		emptyQuotes : 0,
-		selfEmptyQuotes : 0,
-		gamesPlayed: 0,
-		winners 	: 0,
-		losers 		: 0
-	}
-	console.log(june.colour.green+'[June]'+june.colour.reset+' Bot Logged in');
-	if(passiveMode){
-		console.log(june.colour.green+'[June]'+june.colour.reset+' Not logging chat');
-	} else {
-		console.log(june.colour.green+'[June]'+june.colour.reset+' Logging chat');
-	}
-	bot.joinChat(bot.steamChatRoomID);
-	bot.setPersonaState(june.Steam.EPersonaState.Online); // to display your bot's status as "Online"
+bot.logOn(june.cfg.steamAccount.username,june.cfg.steamAccount.password,steamGuard);
 
-	june.stdin.addListener("data", function(d) {
-		june.loadModule('../lib/botSTDIN').listenConsole(d,june);
-	});
+botBirth = new Date();
+
+bot.on('loggedOn', function() {
+	console.log(june.colour.green+'[June]'+june.colour.reset+' Bot Logged in');
+	console.log(june.colour.green+'[June]'+june.colour.reset+' Waiting for web session...');
+	bot.on('sentry',function(sentryBuffer){
+		if(!june.fs.existsSync('data/sentry')) {
+			var sentryBuf = new Buffer(sentryBuffer);
+			june.fs.writeFile("data/sentry", sentryBuf, function(err) {
+				if(err) {
+					console.log(err);
+				} else {
+					console.log(sentryBuf);
+					console.log("Captured the sentry hash");
+				}
+			}); 
+		}
+	})
+	bot.on('webSessionID',function(sessionID){
+
+		console.log(june.colour.green+'[June]'+june.colour.reset+' Received web session ID. Initialising bot.');
+
+		bot.botStats = {
+			botBirth : botBirth.getTime()/1000,
+			messagesLogged : 0,
+			linksLogged : 0,
+			braesKicked : 0,
+			validCommandRequests : 0,
+			invalidCommandRequests : 0,
+			emptyQuotes : 0,
+			selfEmptyQuotes : 0,
+			gamesPlayed: 0,
+			winners 	: 0,
+			losers 		: 0,
+		}
+		bot.punter = new Array();
+
+		june.SteamTrade.sessionID = sessionID;
+
+		june.stdin.addListener("data", function(d) {
+			june.loadModule('../lib/botSTDIN').listenConsole(d,june);
+		});
+
+		bot.botStats.webSessionID = sessionID;
+
+		bot.webLogOn(function(cookies){
+			cookies.split(';').forEach(function(cookie){
+				june.SteamTrade.setCookie(cookie);
+			})
+			console.log(june.SteamTrade);
+			console.log(june.colour.green+'[June]'+june.colour.reset+' Bot initialised and ready to go.');
+
+			bot.joinChat(bot.steamChatRoomID);
+			bot.setPersonaState(june.Steam.EPersonaState.Online); // to display your bot's status as "Online"
+		})
+	})
 });
+
 bot.on('friendMsg', function(source, message, type) { // friend messages
 	commandFile = june.loadModule('../lib/chatCommands').getActiveCommand(message,source,june);
 });

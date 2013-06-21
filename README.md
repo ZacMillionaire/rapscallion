@@ -14,9 +14,8 @@ For this to work, the following dependancies are needed:
 Non-node.js dependancies are:
 
 - A new steam account to be used as a bot.
-	- This account will need to have steamGuard disabled
-	- You'll also need to gift a game to this account or select a free one from the store in order to allow it to join chat rooms.
-		- This is something Steam has in place, so there's no getting around it.
+	- You'll also need to gift a game to this account in order to allow it to join chat rooms.
+		- This is something Steam has in place, so there's no getting around it. (see [This support article](https://support.steampowered.com/kb_article.php?ref=3330-IAGK-7663) for exact details)
 
 You'll also need to create an empty database, then import the sql into that database, then within the cfg/config.js file, set the database and steam account details accordingly and all should be set.
 I've not tested this part so let me know if anything goes wrong.
@@ -46,6 +45,20 @@ Group owner -> Officer -> Moderator -> User
 
 For the best result, the bot should have Officer status and everyone else at Moderator below. Or give the bot just Moderator priviledges if you only want it to affect regular users.
 Nothing with happen if the bot cannot kick or ban a 'winner' aside from sending a message to them and the group chat window.
+
+##Betting
+
+For this feature to work, your bot MUST HAVE STEAM GUARD ENABLED FOR AT LEAST 15 DAYS IF YOU WANT TO BE ABLE TO BET ITEMS.
+
+As per the guidelines set by Steam:
+
+>‌###I can't trade! Why not?
+
+>There are a few different reasons why you may be unable to trade. The reason is typically shown to you when you try to initiate a trade.
+>We require Steam Guard to be enabled for 15 days to help protect your items and Steam Wallet funds from being misused by somebody who may have illicitly obtained your password. If you have not had Steam Guard enabled for 15 days, you will be unable to trade. Accounts that currently have Steam Guard disabled will be unable to trade.
+>If you reset your password, you will be restricted from trading for 5 days. If your account has not had any activity for more than 2 months, you will be restricted from trading for 30 days. We do this to help protect users who lose access to their email account. Note that this does not affect password changes, only password resets.
+>You also may be unable to trade if your account has been banned from trading by Steam Support for violating the Steam Subscriber Agreement. Bans may be temporary. Permanent bans can only be removed by Steam Support.
+
 
 ##Closing
 

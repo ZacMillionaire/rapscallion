@@ -1,4 +1,6 @@
 var Steam		=	require('steam');
+var SteamTrade  =	require('steam-trade');
+var SteamTrade  =	new SteamTrade();
 var mysql		=	require('mysql');
 var fs			=	require('fs');
 var cfg			=	require('./config');
@@ -19,6 +21,7 @@ var colours = {
 }
 
 exports.Steam = Steam;
+exports.SteamTrade = SteamTrade;
 exports.mysql = mysql;
 exports.fs = fs;
 exports.cfg = cfg;
