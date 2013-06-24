@@ -7,3 +7,5 @@ lib/betMe.js
 lib/tradeMe.js
 trade.js
 data/sentry
+backup/
+cfg/apis_config.js
