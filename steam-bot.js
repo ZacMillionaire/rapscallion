@@ -91,6 +91,7 @@ june.pool.getConnection(function(err,connection){
 				})
 			})
 		});
+
 		bot.on('friendMsg', function(source, message, type) { // friend messages
 			commandFile = june.loadModule('../lib/chatCommands').getActiveCommand(message,source,june);
 		});
@@ -107,7 +108,7 @@ june.pool.getConnection(function(err,connection){
 			console.log('Got an invite to '+chatRoomName+'('+chatRoomID+') from '+patronID);
 			bot.joinChat(chatRoomID); // autojoin on invite
 		});
-		process.on('error',function(){
+		process.on('uncaughtException',function(error){
 			console.log(june.colour.red+"[ERROR]"+june.colour.reset+" shit fucked up somewhere.");
 		})
 		connection.on('error',function(err){
