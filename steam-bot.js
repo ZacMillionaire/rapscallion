@@ -61,6 +61,7 @@ june.pool.getConnection(function(err,connection){
 					messagesLogged : 0,
 					linksLogged : 0,
 					braesKicked : 0,
+					braesBanned: 0,
 					validCommandRequests : 0,
 					invalidCommandRequests : 0,
 					emptyQuotes : 0,
@@ -68,6 +69,8 @@ june.pool.getConnection(function(err,connection){
 					gamesPlayed: 0,
 					winners 	: 0,
 					losers 		: 0,
+					braeFails : 0,
+					muteTwitter : true,
 				}
 				bot.punter = new Array();
 
@@ -87,6 +90,7 @@ june.pool.getConnection(function(err,connection){
 					console.log(june.colour.green+'[June]'+june.colour.reset+' Bot initialised and ready to go.');
 
 					bot.joinChat(bot.steamChatRoomID);
+					//bot.sendMessage(bot.steamChatRoomID,"I RISE TO REAP. Also ATM is currently dead or something and won't be back for awhile.\n\n\nI made sure of it.")
 					bot.setPersonaState(june.Steam.EPersonaState.Online); // to display your bot's status as "Online"
 				})
 			})
@@ -114,5 +118,10 @@ june.pool.getConnection(function(err,connection){
 		connection.on('error',function(err){
 			databaseHandle = june.loadModule('../lib/database').errorHandle(err,june);
 		})
+		setInterval(function() {
+			if(!bot.botStats.muteTwitter) {
+				twitterdottxt = june.loadModule('../lib/twitterdottxt').pullmessage(june);
+			}
+		}, 15 * 60 * 1000);
 	}
 });
