@@ -9,13 +9,13 @@ var stdin		=	process.openStdin();
 var util 		= 	require('util');
 var Twitter 	= 	require('twit');
 var Twitter 	= new Twitter({
-						consumer_key: 'WuCRqKmeWJcNR2TAhQg',
-						consumer_secret: 'i1u6doFqW1ddCaFglrnhhU8vKPgQRPepgUsrejlsZBE',
-						access_token: '179030882-Zh7fKnzvn8wkSFdyM7yDpkELMRth3IpBr2GurrmS',
-						access_token_secret: 'NBifKsbrcNK48GFqyYh19HX5c2kEBLmeXOw8yKO8'
+						consumer_key: '',
+						consumer_secret: '',
+						access_token: '',
+						access_token_secret: ''
 					});
 
-bot.steamChatRoomID = '103582791429601458'; // remember to pass this into the bots config at some point
+bot.steamChatRoomID = ''; // remember to pass this into the bots config at some point
 
 var colours = {
 	reset : "\033[0m",
